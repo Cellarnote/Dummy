@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useState } from "react";
+import { useState, type ReactElement } from "react";
 import { supabase } from "@/lib/supabase";
 
 const materialDefaults: Record<string, { care: string[]; careDetails: string; services: { basic: string; deluxe: string; premium: string } }> = {
@@ -335,7 +335,7 @@ export default function TagManager() {
                     const icons = [...careActive];
                     const n = icons.length;
                     const rows = n <= 3 ? [icons] : n <= 4 ? [icons.slice(0, 2), icons.slice(2)] : [icons.slice(0, 3), icons.slice(3)];
-                    const miniIcons: Record<string, JSX.Element> = {
+                    const miniIcons: Record<string, ReactElement> = {
                       vacuum:   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h13l3-6H6L3 12z"/><circle cx="7" cy="17" r="2"/><circle cx="14" cy="17" r="2"/><path d="M3 12v3"/></svg>,
                       handwash: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 14s0 4 4 4 4-4 4-4V9a1 1 0 00-2 0v3"/><path d="M10 12V7a1 1 0 012 0v5"/><path d="M12 12V6a1 1 0 012 0v6"/><path d="M14 11V8a1 1 0 012 0v5c0 3-2 5-4 5"/><path d="M8 14V9a1 1 0 00-2 0v3c0 1 .5 2 2 2z"/></svg>,
                       spot:     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8 2 5 9 5 13a7 7 0 0014 0c0-4-3-11-7-11z"/><path d="M9 13a3 3 0 006 0"/></svg>,
