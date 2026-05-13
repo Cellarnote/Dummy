@@ -522,7 +522,7 @@ export default function TagManager() {
                   <img src="/logo.png" alt="Logo" style={{ height: "28px", objectFit: "contain", filter: "brightness(0)" }} />
                   <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(0,0,0,0.95)", letterSpacing: "0.06em", textTransform: "uppercase" }}>Service Card</div>
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`https://${tapUrl}`)}&color=070e06&bgcolor=ffffff`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(tapUrl)}&color=070e06&bgcolor=ffffff`}
                     alt="QR"
                     style={{ width: "90px", height: "90px", borderRadius: "4px" }}
                   />
