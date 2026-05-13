@@ -1,6 +1,15 @@
 "use client";
 import { useState } from "react";
 
+const serviceDefaults: Record<string, { basic: string; deluxe: string; premium: string }> = {
+  Wool:      { basic: "Dry vacuum & light spot treatment", deluxe: "Hand wash, stain removal & lay-flat dry", premium: "Full hand wash, enzyme treatment, repair & block dry" },
+  Silk:      { basic: "Gentle surface dust & spot treat", deluxe: "Specialist hand clean, pH-neutral rinse & air dry", premium: "Full immersion wash, fringe restore, silk-safe protector & flat dry" },
+  Nylon:     { basic: "Vacuum & spot clean", deluxe: "Hot water extraction & deodorise", premium: "Deep steam clean, stain guard & express dry" },
+  Polyester: { basic: "Vacuum & spot clean", deluxe: "Steam clean & deodorise", premium: "Full steam extraction, stain guard & next-day dry" },
+  Cotton:    { basic: "Vacuum & surface spot treat", deluxe: "Gentle machine wash, mild detergent & air dry", premium: "Full wash, colour restore & flat dry" },
+  Jute:      { basic: "Dry vacuum & light spot treat", deluxe: "Low-moisture spot clean & air dry", premium: "Full dry clean, reshape & UV protect" },
+};
+
 const careIconMap: Record<string, { label: string; icon: React.ReactNode }> = {
   vacuum:   { label: "Vacuum",     icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h13l3-6H6L3 12z"/><circle cx="7" cy="17" r="2"/><circle cx="14" cy="17" r="2"/><path d="M3 12v3"/></svg> },
   handwash: { label: "Hand Wash",  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 14s0 4 4 4 4-4 4-4V9a1 1 0 00-2 0v3"/><path d="M10 12V7a1 1 0 012 0v5"/><path d="M12 12V6a1 1 0 012 0v6"/><path d="M14 11V8a1 1 0 012 0v5c0 3-2 5-4 5"/><path d="M8 14V9a1 1 0 00-2 0v3c0 1 .5 2 2 2z"/></svg> },
@@ -120,17 +129,22 @@ export default function TapExperience({ card }: { card: Card }) {
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "14px" }}>
               {(["basic", "deluxe", "premium"] as const).map((key) => {
                 const on = selectedService === key;
+                const desc = on && card.service_details
+                  ? card.service_details
+                  : serviceDefaults[card.carpet_material]?.[key] ?? "";
                 return (
                   <div
                     key={key}
                     onClick={() => { setSelectedService(on ? "" : key); setReschedulePrompt(false); }}
-                    style={{ padding: "12px 16px", border: `1px solid ${on ? "#2b5525" : "rgba(0,0,0,0.08)"}`, borderRadius: "10px", background: on ? "#eaf4d2" : "white", display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", transition: "all 0.15s" }}
+                    style={{ padding: "12px 16px", border: `1px solid ${on ? "#2b5525" : "rgba(0,0,0,0.08)"}`, borderRadius: "10px", background: on ? "#eaf4d2" : "white", cursor: "pointer", transition: "all 0.15s" }}
                   >
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: on ? "#2b5525" : "#374151", textTransform: "capitalize", flexShrink: 0 }}>{key}</span>
-                    {on && card.service_details && (
-                      <span style={{ fontSize: "11px", color: "#4b7a45", flex: 1, lineHeight: 1.4 }}>{card.service_details}</span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: desc ? "6px" : 0 }}>
+                      <span style={{ fontSize: "13px", fontWeight: 600, color: on ? "#2b5525" : "#374151", textTransform: "capitalize" }}>{key}</span>
+                      {on && <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2b5525", flexShrink: 0 }} />}
+                    </div>
+                    {desc && (
+                      <div style={{ fontSize: "11px", color: on ? "#4b7a45" : "#9ca3af", lineHeight: 1.5 }}>{desc}</div>
                     )}
-                    {on && <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#2b5525", flexShrink: 0 }} />}
                   </div>
                 );
               })}
