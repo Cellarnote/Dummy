@@ -9,11 +9,23 @@ const supabase = createClient(
 async function getCardData(slug: string) {
   const { data: card } = await supabase
     .from("cards")
-    .select("*, customers(first_name, last_name)")
+    .select("*")
     .eq("slug", slug)
     .maybeSingle();
 
-  return card ?? null;
+  if (!card) return null;
+
+  let customer = null;
+  if (card.customer_id) {
+    const { data } = await supabase
+      .from("customers")
+      .select("first_name, last_name")
+      .eq("id", card.customer_id)
+      .maybeSingle();
+    customer = data;
+  }
+
+  return { ...card, customers: customer };
 }
 
 export default async function TapPage({
