@@ -208,7 +208,17 @@ export default function TagManager() {
                     </div>
                   )}
                 </div>
-                <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" style={{ width: "100%", padding: "8px 10px", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "4px", fontSize: "12px", color: "#070e06" }} />
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  onBlur={async () => {
+                    if (customerId && firstName) {
+                      await supabase.from("customers").update({ first_name: firstName }).eq("id", customerId);
+                    }
+                  }}
+                  placeholder="First name"
+                  style={{ width: "100%", padding: "8px 10px", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "4px", fontSize: "12px", color: "#070e06" }}
+                />
               </div>
 
               <input value={address} onChange={(e) => setAddress(e.target.value)} onBlur={() => updateCard({ address })} placeholder="Address" style={{ width: "100%", padding: "8px 10px", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "4px", fontSize: "12px", color: "#070e06", marginBottom: "10px" }} />
