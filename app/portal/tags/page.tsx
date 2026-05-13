@@ -77,19 +77,31 @@ export default function TagManager() {
     setCustomerId(c.id);
     setShowCustomerDropdown(false);
     setCustomerSearchResults([]);
-    initCard(c.id);
+    // Pass name directly — state hasn't flushed yet when this runs
+    initCard(c.id, c.first_name ?? "", c.last_name ?? "");
   }
 
-  async function initCard(overrideCid?: string) {
+  function buildSlug(first: string, last: string, cardId: string) {
+    const clean = (s: string) =>
+      s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const parts = [clean(last), clean(first)].filter(Boolean);
+    parts.push(cardId.slice(0, 8));
+    return parts.join("-");
+  }
+
+  async function initCard(overrideCid?: string, overrideFirst?: string, overrideLast?: string) {
     if (cardId) return;
+
+    const effectiveFirst = overrideFirst ?? firstName;
+    const effectiveLast = overrideLast ?? lastName;
 
     let cid: string | null | undefined = overrideCid ?? customerId;
     if (!cid) {
-      if (!lastName) return;
+      if (!effectiveLast) return;
       const { data: existing } = await supabase
         .from("customers")
         .select("id")
-        .ilike("last_name", lastName)
+        .ilike("last_name", effectiveLast)
         .limit(1)
         .maybeSingle();
 
@@ -98,7 +110,7 @@ export default function TagManager() {
       } else {
         const newCid = crypto.randomUUID();
         await supabase.from("customers").insert({
-          id: newCid, first_name: firstName, last_name: lastName,
+          id: newCid, first_name: effectiveFirst, last_name: effectiveLast,
           address, phone, email,
         });
         cid = newCid;
@@ -107,10 +119,11 @@ export default function TagManager() {
     }
 
     const newCardId = crypto.randomUUID();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "yourapp.com";
-    const url = `${appUrl}/tap/${newCardId}`;
+    const slug = buildSlug(effectiveFirst, effectiveLast, newCardId);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "demo-carpetcleaners.vercel.app";
+    const url = `https://${appUrl}/tap/${slug}`;
     await supabase.from("cards").insert({
-      id: newCardId, customer_id: cid,
+      id: newCardId, slug, customer_id: cid,
       carpet_size: carpetSize, carpet_material: carpetMaterial,
       notes: carpetNotes, care_icons: Array.from(careActive),
       care_details: careDetails, service: selectedService, tap_url: url,

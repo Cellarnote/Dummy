@@ -10,7 +10,7 @@ async function getCardData(slug: string) {
   const { data: card } = await supabase
     .from("cards")
     .select("*, customers(first_name, last_name)")
-    .eq("id", slug)
+    .eq("slug", slug)
     .maybeSingle();
 
   return card ?? null;
