@@ -2,6 +2,15 @@
 import { useState, type ReactElement } from "react";
 import { supabase } from "@/lib/supabase";
 
+interface Customer {
+  id: string;
+  first_name: string;
+  last_name: string;
+  address: string;
+  phone: string;
+  email: string;
+}
+
 const materialDefaults: Record<string, { care: string[]; careDetails: string; services: { basic: string; deluxe: string; premium: string } }> = {
   Wool:      { care: ["handwash", "spot", "airdry", "noblech"], careDetails: "Your carpet is Wool and requires gentle hand washing to preserve its natural fibres. Spot treat stains promptly and always lay flat to air dry. Bleach should never be used as it will damage the wool and cause irreversible shrinkage.", services: { basic: "Dry vacuum & light spot treatment", deluxe: "Hand wash, stain removal & lay-flat dry", premium: "Full hand wash, enzyme treatment, repair & block dry" } },
   Silk:      { care: ["handwash", "spot", "airdry", "noblech"], careDetails: "Your carpet is Silk and requires specialist hand cleaning using pH-neutral products only. Spot treat with care and allow to air dry completely flat. Bleach must never be used — it will permanently damage the delicate silk fibres and cause colour loss.", services: { basic: "Gentle surface dust & spot treat", deluxe: "Specialist hand clean, pH-neutral rinse & air dry", premium: "Full immersion wash, fringe restore, silk-safe protector & flat dry" } },
@@ -35,20 +44,52 @@ export default function TagManager() {
   const [reschedulePrompt, setReschedulePrompt] = useState(false);
   const [editingService, setEditingService] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [customerSearchResults, setCustomerSearchResults] = useState<Customer[]>([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const sections = { description: true, message: true, rating: true, coupon: true };
   const discountCode = "";
   const discountAmt = "";
 
-  async function initCard() {
-    if (!lastName || cardId) return;
+  async function handleLastNameChange(value: string) {
+    setLastName(value);
+    setCustomerId(null);
+    if (value.length < 2) {
+      setCustomerSearchResults([]);
+      setShowCustomerDropdown(false);
+      return;
+    }
+    const { data } = await supabase
+      .from("customers")
+      .select("id, first_name, last_name, address, phone, email")
+      .ilike("last_name", `%${value}%`)
+      .limit(5);
+    const results = data ?? [];
+    setCustomerSearchResults(results);
+    setShowCustomerDropdown(results.length > 0);
+  }
 
-    // Find or create customer by last name
-    let cid = customerId;
+  function handleCustomerSelect(c: Customer) {
+    setFirstName(c.first_name ?? "");
+    setLastName(c.last_name ?? "");
+    setAddress(c.address ?? "");
+    setPhone(c.phone ?? "");
+    setEmail(c.email ?? "");
+    setCustomerId(c.id);
+    setShowCustomerDropdown(false);
+    setCustomerSearchResults([]);
+    initCard(c.id);
+  }
+
+  async function initCard(overrideCid?: string) {
+    if (cardId) return;
+
+    let cid: string | null | undefined = overrideCid ?? customerId;
     if (!cid) {
+      if (!lastName) return;
       const { data: existing } = await supabase
         .from("customers")
         .select("id")
-        .ilike("last_name", lastName || "")
+        .ilike("last_name", lastName)
         .limit(1)
         .maybeSingle();
 
@@ -62,11 +103,12 @@ export default function TagManager() {
         });
         cid = newCid;
       }
-      setCustomerId(cid);
+      setCustomerId(cid!);
     }
 
     const newCardId = crypto.randomUUID();
-    const url = `yourapp.com/tap/${newCardId}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "yourapp.com";
+    const url = `${appUrl}/tap/${newCardId}`;
     await supabase.from("cards").insert({
       id: newCardId, customer_id: cid,
       carpet_size: carpetSize, carpet_material: carpetMaterial,
@@ -129,7 +171,30 @@ export default function TagManager() {
               <div style={{ padding: "20px" }}>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                <input value={lastName} onChange={(e) => setLastName(e.target.value)} onBlur={initCard} placeholder="Last name" style={{ width: "100%", padding: "8px 10px", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "4px", fontSize: "12px", color: "#070e06" }} />
+                <div style={{ position: "relative" }}>
+                  <input
+                    value={lastName}
+                    onChange={(e) => handleLastNameChange(e.target.value)}
+                    onBlur={() => { setTimeout(() => setShowCustomerDropdown(false), 150); if (!customerId && !cardId && lastName) initCard(); }}
+                    placeholder="Last name"
+                    style={{ width: "100%", padding: "8px 10px", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "4px", fontSize: "12px", color: "#070e06" }}
+                  />
+                  {showCustomerDropdown && customerSearchResults.length > 0 && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 20, background: "white", border: "0.5px solid rgba(0,0,0,0.12)", borderRadius: "6px", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: "2px", overflow: "hidden" }}>
+                      {customerSearchResults.map((c) => (
+                        <div
+                          key={c.id}
+                          onMouseDown={(e) => { e.preventDefault(); handleCustomerSelect(c); }}
+                          style={{ padding: "8px 12px", cursor: "pointer", fontSize: "12px", color: "#070e06", borderBottom: "0.5px solid rgba(0,0,0,0.05)", display: "flex", alignItems: "baseline", gap: "4px" }}
+                        >
+                          <span style={{ fontWeight: 500 }}>{c.last_name}</span>
+                          {c.first_name && <span style={{ color: "#374151" }}>{c.first_name}</span>}
+                          {c.email && <span style={{ fontSize: "10px", color: "#9ca3af", marginLeft: "4px" }}>{c.email}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" style={{ width: "100%", padding: "8px 10px", border: "0.5px solid rgba(0,0,0,0.1)", borderRadius: "4px", fontSize: "12px", color: "#070e06" }} />
               </div>
 
