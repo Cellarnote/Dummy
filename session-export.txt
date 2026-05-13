@@ -1,0 +1,130 @@
+SESSION EXPORT — Master Cleaners Portal
+========================================
+Date: 2026-05-12
+Project: C:\Users\5LW5DD2\dummy
+Stack: Next.js 16.2.6 (App Router, Turbopack), Supabase, TypeScript
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FILES MODIFIED / CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+app/portal/layout.tsx
+  - Renamed "Tag Manager" → "Card Manager" in nav
+  - Added "Customer Manager" nav link → /portal/customers
+  - Replaced "Demo Portal" text in top bar with logo.png
+
+app/portal/dashboard/page.tsx
+  - Full rewrite: personalized greeting, today's date, job summary
+  - 4 stat cards (Total Customers, QR-Tagged Rugs, Rebook Rate, Jobs This Month)
+  - Recent Activity feed (avatar, name, action tag, timestamp)
+  - QR Tag Coverage breakdown (progress bars per rug type)
+  - Upcoming Jobs grid (date chip, name, rug count, booking method)
+  - Pending/unconfirmed entries highlighted in amber (#d97706)
+  - Mobile-responsive via CSS media queries
+
+app/portal/tags/page.tsx  (Card Manager)
+  - Background: cream #eaf4d2 throughout phone preview
+  - Phone preview: logo.png replaces MC text
+  - Phone preview: Cormorant Garamond serif for Hello, / [First Name] (two lines)
+  - Phone preview: carpet icon → tilted green rectangle corner (SVG)
+  - Phone preview: care icons shown as actual SVGs (not text pills)
+    · Row alignment policy: 1→1 row, 2→1 row, 3→1 row, 4→2×2, 5→3+2, 6→3+3
+    · Icon size 13×13, box 37×37, labels inside green squares
+  - Phone preview: care details description auto-populates from material policy
+  - Phone preview: service mini-cards clickable, show description next to tier name
+  - Phone preview: "Reschedule Services" green button
+    · If service selected: shows "Carpet Cleaning Awaits!" with scattered stars
+    · If no service: prompt appears in 80% green
+  - Phone preview: welcome message between greeting and Carpet section
+  - Phone preview: constrained to iPhone proportions (160×346px)
+  - Print Preview card: logo.png (black via brightness filter), 0.75px dark green border,
+    "Service Card" in near-black, "Scan for / Service Details" near-black
+  - Export card: appears below Print Preview when URL generated, stretches to match
+    form column height, "Export Print File" button (UI only, no action yet)
+  - Form Services section: Edit button under green dot on selected card
+    · Inline textarea editing, commits on blur/Enter
+    · Backspace to empty restores policy default
+  - materialDefaults: added careDetails descriptions per material (Wool, Silk,
+    Nylon, Polyester, Cotton, Jute, Other)
+  - Removed Tag Orders section entirely
+
+app/portal/customers/page.tsx  (NEW)
+  - Two-column layout matching Card Manager grid
+  - Toolbar: + New Customer button + Search Existing Customers (with dropdown results)
+  - Left column: Customer form (Last/First name, Address, Phone, Email, Notes)
+    · Auto-save on blur, Save Customer button, "Saved" confirmation flash
+  - Right column: Rugs & Cards panel
+    · Empty state when no customer loaded
+    · Shows associated cards (size, material, service badge, tap URL) when customer selected
+  - Both columns stretch flush to same bottom edge (alignItems: stretch)
+
+app/tap/[slug]/page.tsx
+  - Fetches card + customer join from Supabase by card UUID
+
+app/tap/[slug]/tap-experience.tsx
+  - Consumer-facing page background: #eaf4d2
+  - Font: Cormorant Garamond (replaces Playfair Display)
+  - Greeting: "Hello," (L1, italic) + First Name (L2) — two lines
+  - Carpet icon: tilted green rectangle corner SVG, size/material centered below
+  - Care icons: displayed from careIconMap
+  - Services: selectable cards with service_details
+
+public/logo.png  (NEW — user-provided)
+  - Used in: phone preview header, print preview card (black filter), top nav bar
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DESIGN TOKENS IN USE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Primary green:        #2b5525
+Medium green:         #4b7a45
+Light green surface:  #eaf4d2
+Light green accent:   #d4ecb0
+Near black:           #070e06
+Text secondary:       #6b7280
+Text muted:           #9ca3af
+Border:               0.5px solid rgba(0,0,0,0.08)
+Warning (amber):      #d97706
+Border radius cards:  12px
+Border radius small:  8px / 6px / 4px
+Font:                 Inter (UI), Cormorant Garamond (consumer greeting)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUPABASE TABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+customers
+  id (uuid), first_name, last_name, address, phone, email
+
+cards
+  id (uuid), customer_id (→ customers.id), carpet_size, carpet_material,
+  notes, care_icons (array), care_details, service, service_details, tap_url
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MATERIAL → CARE POLICY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Wool:      handwash, spot, airdry, noblech
+Silk:      handwash, spot, airdry, noblech
+Nylon:     vacuum, spot, steam
+Polyester: vacuum, spot, steam
+Cotton:    handwash, vacuum, airdry
+Jute:      vacuum, spot, airdry
+Other:     (none)
+
+Each material has Basic / Deluxe / Premium service descriptions
+and a consumer-facing care details paragraph.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PENDING / NOT YET BUILT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Export Print File button (UI only — no export logic)
+- Reschedule Services (UI only — no backend booking logic)
+- Customer Manager search pulls live from Supabase but list/table view not built
+- /portal/settings page exists but content not updated this session
+- QR code on print preview uses api.qrserver.com (third-party)
+
+========================================
+END OF SESSION EXPORT
+========================================

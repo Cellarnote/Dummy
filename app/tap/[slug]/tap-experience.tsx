@@ -1,203 +1,131 @@
 "use client";
 import { useState } from "react";
 
-interface Tag {
+const careIconMap: Record<string, { label: string; icon: React.ReactNode }> = {
+  vacuum:   { label: "Vacuum",     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h13l3-6H6L3 12z"/><circle cx="7" cy="17" r="2"/><circle cx="14" cy="17" r="2"/><path d="M3 12v3"/></svg> },
+  handwash: { label: "Hand Wash",  icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 14s0 4 4 4 4-4 4-4V9a1 1 0 00-2 0v3"/><path d="M10 12V7a1 1 0 012 0v5"/><path d="M12 12V6a1 1 0 012 0v6"/><path d="M14 11V8a1 1 0 012 0v5c0 3-2 5-4 5"/><path d="M8 14V9a1 1 0 00-2 0v3c0 1 .5 2 2 2z"/></svg> },
+  spot:     { label: "Spot Clean", icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C8 2 5 9 5 13a7 7 0 0014 0c0-4-3-11-7-11z"/><path d="M9 13a3 3 0 006 0"/></svg> },
+  steam:    { label: "Steam",      icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9c0-2 1.5-3 1.5-5"/><path d="M12 9c0-2 1.5-3 1.5-5"/><path d="M18 9c0-2 1.5-3 1.5-5"/><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 16h.01M12 16h.01M17 16h.01"/></svg> },
+  airdry:   { label: "Air Dry",    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/></svg> },
+  noblech:  { label: "No Bleach",  icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6l9 12 9-12H3z"/><line x1="4" y1="4" x2="20" y2="20"/></svg> },
+};
+
+interface Card {
   id: string;
-  item_name: string;
-  item_id: string;
-  experience_type: string;
-  description: string;
-  message: string;
-  message_from: string;
-  coupon_code: string;
-  coupon_discount: string;
-  sections: {
-    description: boolean;
-    message: boolean;
-    rating: boolean;
-    coupon: boolean;
-  };
-  tenant_id: string;
+  carpet_size: string;
+  carpet_material: string;
+  notes: string;
+  care_icons: string[];
+  care_details: string;
+  service: string;
+  service_details: string;
+  tap_url: string;
+  customers: { first_name: string; last_name: string } | null;
 }
 
-export default function TapExperience({ tag }: { tag: Tag }) {
-  const [email, setEmail] = useState("");
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  const sections = tag.sections || {
-    description: true,
-    message: true,
-    rating: true,
-    coupon: true,
-  };
-
-  async function handleSubmit() {
-    if (!email || !email.includes("@")) return;
-    setSubmitting(true);
-    await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email,
-        rating,
-        tenant_id: tag.tenant_id,
-        item_id: tag.item_id,
-        item_name: tag.item_name,
-        tag_id: tag.id,
-        experience_type: tag.experience_type,
-        source: "nfc_tap",
-      }),
-    });
-    setSubmitted(true);
-    setSubmitting(false);
-  }
+export default function TapExperience({ card }: { card: Card }) {
+  const [selectedService, setSelectedService] = useState(card.service || "");
+  const firstName = card.customers?.first_name ?? "";
+  const careIcons: string[] = Array.isArray(card.care_icons) ? card.care_icons : [];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: #f4f5f7; }
-        input { font-family: 'Inter', sans-serif; }
-        input:focus { outline: none; }
+        body { font-family: 'Inter', sans-serif; background: #eaf4d2; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#f4f5f7", maxWidth: "480px", margin: "0 auto" }}>
+      <div style={{ minHeight: "100vh", background: "#eaf4d2", maxWidth: "480px", margin: "0 auto" }}>
 
-        {/* HERO */}
-        <div style={{
-          minHeight: "200px",
-          background: "#1e3a5f",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: "32px 24px 24px",
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          <div style={{ position: "relative", zIndex: 2 }}>
-            <div style={{ fontSize: "11px", letterSpacing: "0.14em", color: "rgba(147,197,253,0.7)", textTransform: "uppercase", fontFamily: "'Inter', sans-serif", marginBottom: "8px" }}>
-              {tag.experience_type}
-            </div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "28px", fontWeight: 600, color: "#f0f9ff", lineHeight: 1.1 }}>
-              {tag.item_name}
-            </div>
-          </div>
-        </div>
-
-        {/* BODY */}
-        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "0", background: "white" }}>
-
-          {/* DESCRIPTION */}
-          {sections.description && tag.description && (
-            <div style={{ paddingBottom: "20px", marginBottom: "20px", borderBottom: "0.5px solid #f3f4f6" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginBottom: "10px" }}>About this</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", color: "#374151", lineHeight: 1.7, fontWeight: 400 }}>
-                {tag.description}
-              </div>
+        {/* HEADER */}
+        <div style={{ background: "#eaf4d2", padding: "32px 24px 24px", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <div style={{ fontSize: "22px", fontWeight: 700, color: "#070e06", letterSpacing: "0.08em" }}>MC</div>
+          {firstName && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", lineHeight: 1.2 }}>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "24px", fontStyle: "italic", color: "#070e06" }}>Hello,</span>
+              <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "30px", fontWeight: 500, color: "#070e06" }}>{firstName}</span>
             </div>
           )}
+        </div>
 
-          {/* MESSAGE */}
-          {sections.message && tag.message && (
-            <div style={{ paddingBottom: "20px", marginBottom: "20px", borderBottom: "0.5px solid #f3f4f6" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginBottom: "10px" }}>Message</div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", color: "#374151", lineHeight: 1.7, fontStyle: "italic", fontWeight: 400 }}>
-                &ldquo;{tag.message}&rdquo;
+        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "28px", background: "#eaf4d2" }}>
+
+          {/* CARPET */}
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", marginBottom: "14px" }}>~ Carpet ~</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+              <svg width="220" height="96" viewBox="0 0 220 96" style={{ display: "block", overflow: "hidden" }}>
+                <g transform="translate(6, 6) rotate(15, 0, 0)">
+                  <rect x="0" y="0" width="290" height="290" rx="28" fill="#d4ecb0" stroke="#2b5525" strokeWidth="3"/>
+                  <rect x="12" y="12" width="266" height="266" rx="22" fill="none" stroke="#2b5525" strokeWidth="1.5" strokeOpacity="0.4"/>
+                </g>
+              </svg>
+              <div style={{ textAlign: "center" }}>
+                {card.carpet_size && (
+                  <div style={{ fontSize: "22px", fontWeight: 600, color: "#070e06", lineHeight: 1, marginBottom: "4px" }}>{card.carpet_size}</div>
+                )}
+                {card.carpet_material && (
+                  <div style={{ fontSize: "12px", color: "#9ca3af", fontWeight: 400 }}>{card.carpet_material}</div>
+                )}
               </div>
-              {tag.message_from && (
-                <div style={{ fontSize: "11px", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginTop: "8px", fontWeight: 400 }}>
-                  — {tag.message_from}
-                </div>
+            </div>
+          </div>
+
+          {/* CARE */}
+          {careIcons.length > 0 && (
+            <div>
+              <div style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", marginBottom: "14px" }}>~ Care ~</div>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                {careIcons.map((key) => {
+                  const c = careIconMap[key];
+                  if (!c) return null;
+                  return (
+                    <div key={key} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "52px", height: "52px", borderRadius: "10px", border: "1px solid #2b5525", background: "#eaf4d2", display: "flex", alignItems: "center", justifyContent: "center", color: "#2b5525" }}>
+                        {c.icon}
+                      </div>
+                      <span style={{ fontSize: "9px", color: "#6b7280", textAlign: "center", lineHeight: 1.3 }}>{c.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {card.care_details && (
+                <div style={{ marginTop: "12px", fontSize: "13px", color: "#6b7280", lineHeight: 1.6, fontWeight: 400 }}>{card.care_details}</div>
               )}
             </div>
           )}
 
-          {/* STAR RATING */}
-          {sections.rating && (
-            <div style={{ paddingBottom: "20px", marginBottom: "20px", borderBottom: "0.5px solid #f3f4f6" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginBottom: "10px" }}>Rate your experience</div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <svg
-                    key={s}
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill={s <= (hoverRating || rating) ? "#2563eb" : "none"}
-                    stroke="#2563eb"
-                    strokeWidth="1"
-                    style={{ cursor: "pointer", transition: "all 0.15s" }}
-                    onClick={() => setRating(s)}
-                    onMouseEnter={() => setHoverRating(s)}
-                    onMouseLeave={() => setHoverRating(0)}
+          {/* SERVICES */}
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", marginBottom: "14px" }}>~ Services ~</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {(["basic", "deluxe", "premium"] as const).map((key) => {
+                const on = selectedService === key;
+                return (
+                  <div
+                    key={key}
+                    onClick={() => setSelectedService(on ? "" : key)}
+                    style={{ padding: "14px 18px", border: `1px solid ${on ? "#2b5525" : "rgba(0,0,0,0.08)"}`, borderRadius: "10px", background: on ? "#eaf4d2" : "white", cursor: "pointer", transition: "all 0.15s" }}
                   >
-                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/>
-                  </svg>
-                ))}
-              </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: on ? "6px" : 0 }}>
+                      <span style={{ fontSize: "14px", fontWeight: 600, color: on ? "#2b5525" : "#070e06", textTransform: "capitalize" }}>{key}</span>
+                      {on && <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#2b5525" }} />}
+                    </div>
+                    {on && card.service_details && (
+                      <div style={{ fontSize: "12px", color: "#2b5525", lineHeight: 1.5, fontWeight: 400 }}>{card.service_details}</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          )}
-
-          {/* COUPON */}
-          {sections.coupon && tag.coupon_code && tag.coupon_discount && (
-            <div style={{ paddingBottom: "20px", marginBottom: "20px", borderBottom: "0.5px solid #f3f4f6" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginBottom: "10px" }}>Your exclusive offer</div>
-              <div style={{ background: "#eff6ff", border: "0.5px solid rgba(37,99,235,0.15)", borderRadius: "10px", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <div style={{ fontSize: "10px", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginBottom: "4px" }}>Use code at checkout</div>
-                  <div style={{ fontSize: "18px", fontWeight: 600, color: "#2563eb", letterSpacing: "0.1em" }}>{tag.coupon_code}</div>
-                </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "28px", color: "#2563eb", fontWeight: 600 }}>{tag.coupon_discount}</div>
-              </div>
-            </div>
-          )}
-
-          {/* EMAIL CAPTURE */}
-          {!submitted ? (
-            <div style={{ paddingBottom: "20px" }}>
-              <div style={{ fontSize: "9px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#9ca3af", fontFamily: "'Inter', sans-serif", marginBottom: "10px" }}>
-                Stay connected
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "17px", color: "#111827", fontWeight: 500, marginBottom: "14px", lineHeight: 1.4 }}>
-                Get updates on new releases and offers.
-              </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                style={{ width: "100%", padding: "12px 16px", border: "0.5px solid #d1d5db", borderRadius: "6px", fontSize: "14px", color: "#111827", background: "white", marginBottom: "10px" }}
-              />
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={{ width: "100%", padding: "14px", background: submitting ? "#93c5fd" : "#2563eb", color: "white", border: "none", borderRadius: "6px", fontSize: "13px", fontFamily: "'Inter', sans-serif", letterSpacing: "0.06em", fontWeight: 500, cursor: submitting ? "default" : "pointer" }}
-              >
-                {submitting ? "Submitting…" : "Stay connected"}
-              </button>
-            </div>
-          ) : (
-            <div style={{ padding: "32px 0", textAlign: "center" }}>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: "22px", fontWeight: 600, color: "#111827", marginBottom: "8px" }}>
-                Thank you.
-              </div>
-              <div style={{ fontSize: "12px", color: "#9ca3af", fontWeight: 400, lineHeight: 1.6 }}>
-                You&apos;ll hear from us soon.
-              </div>
-            </div>
-          )}
+          </div>
 
         </div>
 
         {/* FOOTER */}
-        <div style={{ padding: "20px 24px", textAlign: "center", borderTop: "0.5px solid #f3f4f6", background: "white" }}>
-          <div style={{ fontSize: "10px", color: "#d1d5db", fontWeight: 400, letterSpacing: "0.06em" }}>
-            Powered by <span style={{ color: "#2563eb" }}>Demo Portal</span>
-          </div>
+        <div style={{ padding: "24px", textAlign: "center", borderTop: "0.5px solid rgba(0,0,0,0.1)", background: "#eaf4d2" }}>
+          <div style={{ fontSize: "10px", color: "#d1d5db", letterSpacing: "0.06em" }}>MC Service Portal</div>
         </div>
 
       </div>

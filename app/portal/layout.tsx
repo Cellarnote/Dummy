@@ -15,12 +15,24 @@ const navLinks = [
     ),
   },
   {
-    label: "Tag Manager",
+    label: "Card Manager",
     href: "/portal/tags",
     icon: (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
         <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/>
         <line x1="7" y1="7" x2="7.01" y2="7"/>
+      </svg>
+    ),
+  },
+  {
+    label: "Customer Manager",
+    href: "/portal/customers",
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+        <path d="M16 3.13a4 4 0 010 7.75"/>
       </svg>
     ),
   },
@@ -58,7 +70,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <div style={{ width: "20px", height: "1.5px", background: "#070e06", borderRadius: "1px", transition: "all 0.2s", transform: drawerOpen ? "rotate(-45deg) translateY(-5.5px)" : "none" }} />
         </button>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: "15px", fontWeight: 600, color: "#070e06", letterSpacing: "-0.01em" }}>Demo Portal</span>
+          <img src="/logo.png" alt="Logo" style={{ height: "28px", objectFit: "contain" }} />
         </div>
       </div>
 
